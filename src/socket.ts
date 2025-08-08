@@ -1,7 +1,7 @@
 import { Server, Socket } from "socket.io";
 
-import { messageStore } from "./utils/messageStore";
-import { userStore } from "./utils/usersStore";
+import { messageStore } from "./utils/messageStore.js";
+import { userStore } from "./utils/usersStore.js";
 import { IncomingMessage, OutgoingMessage } from "./types";
 
 export function setupSocket(io: Server) {
