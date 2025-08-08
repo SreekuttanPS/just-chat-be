@@ -3,12 +3,15 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { setupSocket } from "./socket.js";
 import cors from "cors";
+import "dotenv/config";
+
+const PORT = process.env.PORT || 3000;
 
 const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // or "*" temporarily
+    origin: process.env.FRONTEND_URL,
     methods: ["GET", "POST"],
   },
 });
@@ -21,7 +24,6 @@ app.get("/", (_, res) => {
   res.send("Chat backend running 🎉");
 });
 
-const PORT = 3000;
 server.listen(PORT, () => {
-  console.log(`🔥 Server is live at http://localhost:${PORT}`);
+  console.log(`🔥 Server is live`);
 });
