@@ -5,6 +5,7 @@ export type IncomingMessage = {
 
 export type OutgoingMessage = IncomingMessage & {
   timestamp: string;
+  messageId: string;
 };
 
 export type User = {

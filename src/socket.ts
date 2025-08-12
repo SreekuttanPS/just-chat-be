@@ -29,6 +29,7 @@ export function setupSocket(io: Server) {
       const messageWithTimestamp: OutgoingMessage = {
         ...data,
         timestamp: new Date().toISOString(),
+        messageId: crypto.randomUUID(),
       };
 
       messageStore.add(messageWithTimestamp);
