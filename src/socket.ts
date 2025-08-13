@@ -2,7 +2,7 @@ import { Server, Socket } from "socket.io";
 
 import { messageStore } from "./utils/messageStore.js";
 import { userStore } from "./utils/usersStore.js";
-import { IncomingMessage, OutgoingMessage } from "./types";
+import { ClientMessage, OutgoingMessage } from "./types";
 
 export function setupSocket(io: Server) {
   io.on("connection", (socket: Socket) => {
@@ -24,7 +24,7 @@ export function setupSocket(io: Server) {
     socket.emit("chat history", messageStore.getAll());
 
     // Handle chat messages
-    socket.on("chat message", (data: IncomingMessage) => {
+    socket.on("chat message", (data: ClientMessage) => {
       console.log("message received: ", data);
       const messageWithTimestamp: OutgoingMessage = {
         ...data,
@@ -47,6 +47,7 @@ export function setupSocket(io: Server) {
           username: user.username,
           message: `${user.username} left the chat`,
           timestamp: new Date().toISOString(),
+          messageId: crypto.randomUUID(),
         });
 
         console.log(`❌ ${user.username} disconnected: ${socket.id}`);

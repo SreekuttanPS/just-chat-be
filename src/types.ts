@@ -1,9 +1,18 @@
-export type IncomingMessage = {
-  username: string;
+export type ClientMessage = {
   message: string;
+  user: {
+    name: string;
+    username: string;
+  };
+  replyTo: {
+    messageId: string;
+    message: string;
+    username: string;
+    name: string;
+  } | null;
 };
 
-export type OutgoingMessage = IncomingMessage & {
+export type OutgoingMessage = ClientMessage & {
   timestamp: string;
   messageId: string;
 };
