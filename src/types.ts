@@ -20,4 +20,5 @@ export type OutgoingMessage = ClientMessage & {
 export type User = {
   socketId: string;
   username: string;
+  name: string;
 };

@@ -7,15 +7,18 @@ import { ClientMessage, OutgoingMessage } from "./types";
 export function setupSocket(io: Server) {
   io.on("connection", (socket: Socket) => {
     console.log(`✅ User connected: ${socket.id}`);
+    console.log("userStore.getAll(): ", userStore.getAll());
+    io.emit("get all users", userStore.getAll());
 
-    socket.on("register", (username: string) => {
-      console.log("register: ", username);
-      userStore.add(socket.id, username);
+    socket.on("register", (data: { name: string; username: string }) => {
+      console.log("register: ", data?.username);
+      userStore.add(socket.id, data?.username, data?.name);
+      io.emit("get all users", userStore.getAll());
 
       // Broadcast user joined
       socket.broadcast.emit("user joined", {
-        username,
-        message: `${username} joined the chat`,
+        username: data?.username,
+        message: `${data?.username} joined the chat`,
         timestamp: new Date().toISOString(),
       });
     });
@@ -41,6 +44,7 @@ export function setupSocket(io: Server) {
       const user = userStore.getBySocket(socket.id);
       if (user) {
         userStore.remove(socket.id);
+        io.emit("get all users", userStore.getAll());
 
         // Broadcast user left
         socket.broadcast.emit("user left", {
@@ -55,58 +59,3 @@ export function setupSocket(io: Server) {
     });
   });
 }
-
-/* 
-// socket.ts
-import { Server, Socket } from "socket.io";
-
-interface UserSocketMap {
-  [userId: string]: string; // userId -> socketId
-}
-
-const userSocketMap: UserSocketMap = {};
-
-export function setupSocket(io: Server) {
-  io.on("connection", (socket: Socket) => {
-    console.log("✅ User connected:", socket.id);
-
-    // When a user logs in (send userId from client)
-    socket.on("register_user", (userId: string) => {
-      userSocketMap[userId] = socket.id;
-      console.log(`📌 Registered ${userId} -> ${socket.id}`);
-    });
-
-    // Start private chat
-    socket.on("start_private_chat", ({ fromUserId, toUserId }) => {
-      const targetSocketId = userSocketMap[toUserId];
-      if (!targetSocketId) return;
-
-      // Create consistent room ID
-      const roomId = [fromUserId, toUserId].sort().join("_");
-      socket.join(roomId);
-      io.to(targetSocketId).socketsJoin(roomId);
-
-      console.log(`💬 Private room created: ${roomId}`);
-      io.to(roomId).emit("private_chat_started", { roomId });
-    });
-
-    // Send private message
-    socket.on("private_message", ({ roomId, message, senderId }) => {
-      io.to(roomId).emit("private_message", {
-        senderId,
-        message,
-        timestamp: Date.now(),
-      });
-    });
-
-    // Handle disconnect
-    socket.on("disconnect", () => {
-      for (const [userId, sockId] of Object.entries(userSocketMap)) {
-        if (sockId === socket.id) delete userSocketMap[userId];
-      }
-      console.log("❌ User disconnected:", socket.id);
-    });
-  });
-}
-
-*/

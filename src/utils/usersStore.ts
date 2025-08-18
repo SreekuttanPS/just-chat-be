@@ -3,10 +3,10 @@ import { User } from "../types"
 let users: User[] = []
 
 export const userStore = {
-  add(socketId: string, username: string) {
+  add(socketId: string, username: string, name: string) {
     const exists = users.some((user) => user.socketId === socketId)
     if (!exists) {
-      users.push({ socketId, username })
+      users.push({ socketId, username, name })
     }
   },
 
