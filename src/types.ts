@@ -13,6 +13,7 @@ export type ClientMessage = {
 };
 
 export type OutgoingMessage = ClientMessage & {
+  messageType: "text" | "info";
   timestamp: string;
   messageId: string;
 };

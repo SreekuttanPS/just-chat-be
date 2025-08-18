@@ -6,21 +6,28 @@ import { ClientMessage, OutgoingMessage } from "./types";
 
 export function setupSocket(io: Server) {
   io.on("connection", (socket: Socket) => {
-    console.log(`✅ User connected: ${socket.id}`);
-    console.log("userStore.getAll(): ", userStore.getAll());
     io.emit("get all users", userStore.getAll());
 
     socket.on("register", (data: { name: string; username: string }) => {
-      console.log("register: ", data?.username);
+      console.log('User registered: ', data?.username);
       userStore.add(socket.id, data?.username, data?.name);
       io.emit("get all users", userStore.getAll());
 
-      // Broadcast user joined
-      socket.broadcast.emit("user joined", {
-        username: data?.username,
+      // User joined
+      const userJoinedMessage: OutgoingMessage = {
         message: `${data?.username} joined the chat`,
+        user: {
+          name: data?.name,
+          username: data?.username,
+        },
+        replyTo: null,
+        messageType: "info",
         timestamp: new Date().toISOString(),
-      });
+        messageId: crypto.randomUUID(),
+      };
+
+      // socket.broadcast.emit("user joined", userJoinedMessage);
+      io.emit("user joined", userJoinedMessage);
     });
 
     // Send existing messages
@@ -28,9 +35,9 @@ export function setupSocket(io: Server) {
 
     // Handle chat messages
     socket.on("chat message", (data: ClientMessage) => {
-      console.log("message received: ", data);
       const messageWithTimestamp: OutgoingMessage = {
         ...data,
+        messageType: "text",
         timestamp: new Date().toISOString(),
         messageId: crypto.randomUUID(),
       };
@@ -43,16 +50,23 @@ export function setupSocket(io: Server) {
     socket.on("disconnect", () => {
       const user = userStore.getBySocket(socket.id);
       if (user) {
-        userStore.remove(socket.id);
-        io.emit("get all users", userStore.getAll());
-
-        // Broadcast user left
-        socket.broadcast.emit("user left", {
-          username: user.username,
+        // User left
+        const userLeftMessage: OutgoingMessage = {
           message: `${user.username} left the chat`,
+          user: {
+            name: user?.name,
+            username: user?.username,
+          },
+          replyTo: null,
+          messageType: "info",
           timestamp: new Date().toISOString(),
           messageId: crypto.randomUUID(),
-        });
+        };
+        console.log("user left: ", user?.username);
+        io.emit("user left", userLeftMessage);
+        // socket.broadcast.emit("user left", userLeftMessage);
+        userStore.remove(socket.id);
+        io.emit("get all users", userStore.getAll());
 
         console.log(`❌ ${user.username} disconnected: ${socket.id}`);
       }
