@@ -6,13 +6,13 @@ import { ClientMessage, OutgoingMessage } from "./types";
 
 export function setupSocket(io: Server) {
   io.on("connection", (socket: Socket) => {
-    console.log('connected: ', socket.id);
-    io.emit("get all users", userStore.getAll());
+    console.log("connected: ", socket.id);
+    io.emit("get_all_users", userStore.getAll());
 
     socket.on("register", (data: { name: string; username: string }) => {
-      console.log('User registered: ', data?.username);
+      console.log("User registered: ", data?.username);
       userStore.add(socket.id, data?.username, data?.name);
-      io.emit("get all users", userStore.getAll());
+      io.emit("get_all_users", userStore.getAll());
 
       // User joined
       const userJoinedMessage: OutgoingMessage = {
@@ -27,14 +27,14 @@ export function setupSocket(io: Server) {
         messageId: crypto.randomUUID(),
       };
 
-      socket.broadcast.emit("user joined", userJoinedMessage);
+      socket.broadcast.emit("user_joined", userJoinedMessage);
     });
 
     // Send existing messages
-    socket.emit("chat history", messageStore.getAll());
+    socket.emit("chat_history", messageStore.getAll());
 
     // Handle chat messages
-    socket.on("chat message", (data: ClientMessage) => {
+    socket.on("chat_message", (data: ClientMessage) => {
       const messageWithTimestamp: OutgoingMessage = {
         ...data,
         messageType: "text",
@@ -43,7 +43,19 @@ export function setupSocket(io: Server) {
       };
 
       messageStore.add(messageWithTimestamp);
-      io.emit("chat message", messageWithTimestamp);
+      io.emit("chat_message", messageWithTimestamp);
+    });
+
+    // Handle direct messages
+    socket.on("join_room", ({ room }) => {
+      socket.join(room);
+    });
+
+    socket.on("dm_message", ({ room, message }: {room: string; message: ClientMessage}) => {
+      io.to(room).emit("dm_message", {
+        room: room,
+        message,
+      });
     });
 
     // Handle disconnect
@@ -63,9 +75,9 @@ export function setupSocket(io: Server) {
           messageId: crypto.randomUUID(),
         };
         console.log("user left: ", user?.username);
-        socket.broadcast.emit("user left", userLeftMessage);
+        socket.broadcast.emit("user_left", userLeftMessage);
         userStore.remove(socket.id);
-        io.emit("get all users", userStore.getAll());
+        io.emit("get_all_users", userStore.getAll());
 
         console.log(`❌ ${user.username} disconnected: ${socket.id}`);
       }
