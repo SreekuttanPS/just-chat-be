@@ -6,6 +6,7 @@ import { ClientMessage, OutgoingMessage } from "./types";
 
 export function setupSocket(io: Server) {
   io.on("connection", (socket: Socket) => {
+    console.log('connected: ', socket.id);
     io.emit("get all users", userStore.getAll());
 
     socket.on("register", (data: { name: string; username: string }) => {
@@ -26,8 +27,7 @@ export function setupSocket(io: Server) {
         messageId: crypto.randomUUID(),
       };
 
-      // socket.broadcast.emit("user joined", userJoinedMessage);
-      io.emit("user joined", userJoinedMessage);
+      socket.broadcast.emit("user joined", userJoinedMessage);
     });
 
     // Send existing messages
@@ -63,8 +63,7 @@ export function setupSocket(io: Server) {
           messageId: crypto.randomUUID(),
         };
         console.log("user left: ", user?.username);
-        io.emit("user left", userLeftMessage);
-        // socket.broadcast.emit("user left", userLeftMessage);
+        socket.broadcast.emit("user left", userLeftMessage);
         userStore.remove(socket.id);
         io.emit("get all users", userStore.getAll());
 
