@@ -64,6 +64,23 @@ export function setupSocket(io: Server) {
       socket.emit("dm_started", { reciever, roomName });
     });
 
+    socket.on(
+      "dm_message",
+      (data: { roomName: string; message: ClientMessage }) => {
+        console.log("DM - data: ", data);
+        const messageWithTimestamp: OutgoingMessage = {
+          ...data?.message,
+          messageType: "text",
+          timestamp: new Date().toISOString(),
+          messageId: crypto.randomUUID(),
+        };
+        io.to(data?.roomName).emit("dm_message", {
+          roomName: data?.roomName,
+          message: messageWithTimestamp,
+        });
+      }
+    );
+
     // Handle disconnect
     socket.on("disconnect", () => {
       const user = userStore.getBySocket(socket.id);
