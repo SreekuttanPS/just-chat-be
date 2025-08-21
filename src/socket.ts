@@ -3,6 +3,7 @@ import { Server, Socket } from "socket.io";
 import { messageStore } from "./utils/messageStore.js";
 import { userStore } from "./utils/usersStore.js";
 import { ClientMessage, OutgoingMessage } from "./types";
+import { getDmRoomName } from "./utils/commonFuntions.js";
 
 export function setupSocket(io: Server) {
   io.on("connection", (socket: Socket) => {
@@ -47,15 +48,20 @@ export function setupSocket(io: Server) {
     });
 
     // Handle direct messages
-    socket.on("join_room", ({ room }) => {
-      socket.join(room);
-    });
+    socket.on("start_dm", ({ sender, reciever }) => {
+      const roomName = getDmRoomName(sender, reciever);
+      socket.join(roomName);
 
-    socket.on("dm_message", ({ room, message }: {room: string; message: ClientMessage}) => {
-      io.to(room).emit("dm_message", {
-        room: room,
-        message,
-      });
+      // tell the recipient that a DM has started
+      const targetUser = userStore.getByUsername(reciever);
+      const targetSocket = io.sockets.sockets.get(targetUser?.socketId || "");
+      if (targetSocket) {
+        targetSocket.join(roomName);
+        targetSocket.emit("dm_started", { reciever: sender, roomName });
+      }
+
+      // also tell sender, so both are in sync
+      socket.emit("dm_started", { reciever, roomName });
     });
 
     // Handle disconnect
