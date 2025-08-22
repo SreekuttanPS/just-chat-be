@@ -28,7 +28,10 @@ export function setupSocket(io: Server) {
         messageId: crypto.randomUUID(),
       };
 
-      socket.broadcast.emit("user_joined", userJoinedMessage);
+      socket.broadcast.emit("user_joined", {
+        type: "main",
+        data: userJoinedMessage,
+      });
     });
 
     // Send existing messages
@@ -44,7 +47,7 @@ export function setupSocket(io: Server) {
       };
 
       messageStore.add(messageWithTimestamp);
-      io.emit("chat_message", messageWithTimestamp);
+      io.emit("chat_message", { type: "main", data: messageWithTimestamp });
     });
 
     // Handle direct messages
@@ -75,8 +78,11 @@ export function setupSocket(io: Server) {
           messageId: crypto.randomUUID(),
         };
         io.to(data?.roomName).emit("dm_message", {
-          roomName: data?.roomName,
-          message: messageWithTimestamp,
+          type: "direct",
+          data: {
+            roomName: data?.roomName,
+            message: messageWithTimestamp,
+          },
         });
       }
     );
@@ -98,7 +104,10 @@ export function setupSocket(io: Server) {
           messageId: crypto.randomUUID(),
         };
         console.log("user left: ", user?.username);
-        socket.broadcast.emit("user_left", userLeftMessage);
+        socket.broadcast.emit("user_left", {
+          type: "main",
+          data: userLeftMessage,
+        });
         userStore.remove(socket.id);
         io.emit("get_all_users", userStore.getAll());
 
