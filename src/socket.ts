@@ -60,11 +60,15 @@ export function setupSocket(io: Server) {
       const targetSocket = io.sockets.sockets.get(targetUser?.socketId || "");
       if (targetSocket) {
         targetSocket.join(roomName);
-        targetSocket.emit("dm_started", { reciever: sender, roomName });
+        targetSocket.emit("dm_started", {
+          reciever: sender,
+          showMessage: true,
+          roomName,
+        });
       }
 
       // also tell sender, so both are in sync
-      socket.emit("dm_started", { reciever, roomName });
+      socket.emit("dm_started", { reciever, roomName, showMessage: false });
     });
 
     socket.on(
